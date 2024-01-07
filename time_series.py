@@ -15,6 +15,16 @@ def createTimeSeries(df):
      df["dayofyear"] = df.index.dayofyear
      return df
 
+def calculate_mape(actual, predicted):
+        n = len(actual)
+        total_mape = 0
+        for i in range(n):
+                mape = abs((predicted[i] - actual[i]) / actual[i]) * 100
+                total_mape += mape
+    
+        mape_score = total_mape / n
+        print(f"The MAPE is: {mape_score:.2f}%")
+
 current_path_data = os.path.join(os.path.dirname(__file__), "pretrain_data.csv")
 df = pd.read_csv(current_path_data)
 
@@ -29,7 +39,7 @@ print(ndf)
 
 ndf = ndf.set_index('date_time')
 ndf.index = pd.to_datetime(ndf.index)
-ndf.plot(style='.',figsize=(15,5),color = color_pal[0],title="PM2.5")
+ndf.plot(figsize=(15,5),color = color_pal[0],title="PM2.5")
 plt.show()
 
 print("======================================")
@@ -40,7 +50,7 @@ test_set = ndf.loc[ndf.index >= pd.to_datetime('2023-12-06')]
 fig ,ax = plt.subplots(figsize=(15,5))
 train_set.plot(ax=ax)
 test_set.plot(ax=ax)
-ax.axvline('2023-12-25',color='black',ls='--')
+ax.axvline('2023-12-06',color='black',ls='--')
 ax.legend(["train_set","test_set"])
 
 plt.show()
@@ -68,7 +78,7 @@ X_test = test[FEATURES]
 Y_test = test[TARGET]
 
 reg = xgb.XGBRegressor(n_estimators=100,
-                       learning_rating = 0.0001)
+                       learning_rating = 0.1)
 reg.fit(X_train,Y_train,
         eval_set=[(X_train,Y_train),(X_test,Y_test)]
         ,verbose = 100)
@@ -82,3 +92,6 @@ print(df)
 ax = df[['pm_val']].plot(figsize=(15,5))
 df['prediction'].plot(ax=ax)
 plt.show()
+test_set = df.loc[df.index >= pd.to_datetime('2023-12-06')] 
+
+calculate_mape(test_set['pm_val'].to_list(),test_set['prediction'].tolist())
